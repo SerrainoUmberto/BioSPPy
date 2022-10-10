@@ -40,8 +40,8 @@ def plot_ecg(nome_file_da_plottare):
     plt.plot(tempo,segnale)
     plt.grid() #decido che il grafico contenga righe e colonne
     plt.title('ECG') #imposto titolo
-    plt.xlabel('Tempo (Secondi)') #imposto nome delle ascisse
-    plt.ylabel('d.d.p(mV)') #imposto nome delle ordinate
+    plt.xlabel('Tempo') #imposto nome delle ascisse
+    plt.ylabel('d.d.p') #imposto nome delle ordinate
     plt.show()
     
 """
@@ -129,7 +129,7 @@ che il rapporto segnale-rumore del segnale uscente sia pari al SNR in dB indicat
 """
 
 def ecg_noise0(x,f0,f1,SNRdB):
-    SNR=10**(SNRdB/20) 
+    SNR=10**(SNRdB/10) 
     rum=np.random.standard_normal(np.size(x)) #Definisco il rumore bianco
     rumf,k,l=biosppy.signals.tools.filter_signal(signal=rum, ftype='butter',order=4 ,band='bandpass',frequency=[f0,f1], sampling_rate=500)
     #Filtro il rumore bianco e lascio passare solo la banda compresa tra f0 e f1
@@ -167,18 +167,19 @@ def ecg_noise(n_file,n_campioni,f0,f1,SNRdB):
     else:
         print('Inserisci un numero intero per scegliere il file')
 """
-Funzione che chiede quale vettore salvato prelevare, quale finestra utilizzare, e produce in uscita
-il grafico della densità di potenza del segnale in ingresso
+Funzione che chiede quale vettore salvato prelevare, quale finestra utilizzare, quanti campioni deve contenere
+ogni segmento, quanto è l'overlap,se aggiungere zeri al segnale;
+e produce in uscita il grafico della densità di potenza del segnale in ingresso
 """
-def graf_spettro(nome_file_segnale,finestra):
+def graf_spettro(nome_file_segnale,finestra,l_segmento=None,ol=None,pad_=None):
     x=np.load('../../biosppy_ecg/Wrk/' + nome_file_segnale + '.npy')
-    freq,power=biosppy.signals.tools.welch_spectrum(signal=x,sampling_rate=500,window=finestra,decibel=True)
+    freq,power=biosppy.signals.tools.welch_spectrum(signal=x,sampling_rate=500,window=finestra,decibel=True,size=l_segmento,overlap=ol,pad=pad_)
     plt.figure(figsize=(10,8)) #definisco la misura della pagina che presenta il grafico
     plt.plot(freq,power)
     plt.grid() #decido che il grafico contenga righe e colonne
     plt.title('Spettro di densità di potenza') #imposto titolo
-    plt.xlabel('Frequenza (Hz)') #imposto nome delle ascisse
-    plt.ylabel('densità di potenza (mV^2/Hz)in dB') #imposto nome delle ordinate
+    plt.xlabel('Frequenza') #imposto nome delle ascisse
+    plt.ylabel('Densità di potenza (dB)') #imposto nome delle ordinate
     plt.show()
 
 """
@@ -223,7 +224,7 @@ def ecg_disturba(n_file, k):
             if random.random()>0.5:
                 ss=np.std(segnale)
                 c=0.05*ss
-                d=0.5*ss;
+                d=5*ss;
                 a=c+(d-c)*random.random()
                 e=0.01
                 f=(Fs/2)-0.01
@@ -248,7 +249,7 @@ def ecg_disturba(n_file, k):
                 while fo<1:
                    fo=math.floor(c+(d-c)*random.random()) 
                 g=10
-                h =30
+                h =20
                 SNRdB=math.floor(g+(h-g)*random.random())
                 segnale=ecg_noise0(segnale,fo,f1,SNRdB)
                 print('La funzione ha aggiunto un rumore passa banda tra la frequenza fo='+str(fo)+' Hz e la frequenza f1='+str(f1)+' Hz al segnale ECG.\nIl rapporto segnale-rumore in dB vale '+str(SNRdB)+'. \n')
